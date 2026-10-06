@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REFLEX - Code Review Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Chart.js for Radar Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__logo">
+██████╗ ███████╗███████╗██╗     ███████╗██╗  ██╗
+██╔══██╗██╔════╝██╔════╝██║     ██╔════╝╚██╗██╔╝
+██████╔╝█████╗  █████╗  ██║     █████╗   ╚███╔╝
+██╔══██╗██╔══╝  ██╔══╝  ██║     ██╔══╝   ██╔██╗
+██║  ██║███████╗██║     ███████╗███████╗██╔╝ ██╗
+╚═╝  ╚═╝╚══════╝╚═╝     ╚══════╝╚══════╝╚═╝  ╚═╝
+            </div>
+            <div class="header__nav">
+                <span class="header__version">v1.0.0</span>
+                <button id="btnSettings" class="btn btn--small">Settings</button>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <main class="grid-2">
+            <!-- Left Column: Input & Controls -->
+            <div class="col-left">
+                <div class="panel">
+                    <h2 class="panel__title">INPUT CODE</h2>
+                    <div class="code-editor">
+                        <textarea id="codeInput" class="code-editor__textarea" placeholder="Paste your code here..."></textarea>
+                        <div class="code-editor__line-count" id="lineCount">0 Lines</div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 class="panel__title">REVIEW FOCUS & SETUP</h2>
+                    <div class="grid-2">
+                        <div>
+                            <div class="settings-field">
+                                <label>Language</label>
+                                <div class="select-wrap">
+                                    <select id="languageSelect">
+                                        <option value="python">Python</option>
+                                        <option value="javascript">JavaScript</option>
+                                        <option value="typescript">TypeScript</option>
+                                        <option value="go">Go</option>
+                                        <option value="rust">Rust</option>
+                                        <option value="java">Java</option>
+                                        <option value="cpp">C++</option>
+                                        <option value="c">C</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="settings-field" style="margin-top: 15px;">
+                                <label>Model</label>
+                                <div class="select-wrap">
+                                    <select id="modelSelect">
+                                        <option value="gemini-3.1-pro">Gemini 3.1 Pro (Deep)</option>
+                                        <option value="gemini-3.6-flash">Gemini 3.6 Flash (Fast)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="settings-field">
+                                <label>Focus Areas</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox">
+                                        <input type="checkbox" value="correctness" checked> Correctness
+                                    </label>
+                                    <label class="checkbox">
+                                        <input type="checkbox" value="performance" checked> Performance
+                                    </label>
+                                    <label class="checkbox">
+                                        <input type="checkbox" value="security" checked> Security
+                                    </label>
+                                    <label class="checkbox">
+                                        <input type="checkbox" value="readability" checked> Readability
+                                    </label>
+                                    <label class="checkbox">
+                                        <input type="checkbox" value="robustness" checked> Robustness
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-bar">
+                        <button id="btnStart" class="btn btn--primary glitch">██ START REVIEW ██</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Output & Timeline -->
+            <div class="col-right">
+                <div class="panel hidden" id="statusPanel">
+                    <h2 class="panel__title">STATUS</h2>
+                    <div id="statusIndicator" class="status status--idle">
+                        <div class="status__dot"></div>
+                        <span id="statusText">Awaiting Input...</span>
+                    </div>
+                    <div class="loading-bar hidden" id="loadingBar"></div>
+                </div>
+
+                <div id="resultsContainer" class="hidden">
+                    <div class="panel">
+                        <h2 class="panel__title">SCORE RADAR</h2>
+                        <div class="grid-2">
+                            <div class="score-big" id="finalScoreDisplay">--</div>
+                            <div class="radar-container">
+                                <canvas id="radarChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="action-bar">
+                            <button id="btnReReview" class="btn btn--small hidden">🔄 RE-REVIEW</button>
+                            <button id="btnDownloadCode" class="btn btn--small">⬇ CODE</button>
+                            <button id="btnDownloadReport" class="btn btn--small">📋 REPORT</button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="panel__title">REFLECTION TIMELINE</h2>
+                        <div class="round-tabs" id="roundTabs">
+                            <!-- Tabs injected here -->
+                        </div>
+                        <div class="timeline" id="timelineContainer">
+                            <!-- Loop cards injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="panel">
+                    <div class="empty-state">
+                        <div class="empty-state__icon">▓</div>
+                        <div class="empty-state__text">NO ACTIVE SESSION</div>
+                        <p>Paste code and click Start Review.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal__header">
+                <h3 class="modal__title">Settings</h3>
+                <button class="modal__close" id="btnCloseSettings">×</button>
+            </div>
+            <div class="modal__field">
+                <label>Gemini API Key (Leave empty to use .env)</label>
+                <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+            </div>
+            <button id="btnSaveSettings" class="btn btn--small">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
